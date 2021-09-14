@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <span id="myspan"></span>
+    <a href="" id="url" download="out"></a>
+    {% for item in rows %}
+         <script>
+         var item = "{{ item }}";
+
+         if (item.indexOf("file") !== -1) {
+             document.getElementById("url").innerHTML = "{{ item }}";
+             var url = item.substring(
+                 item.lastIndexOf("ht"),
+                 item.lastIndexOf("4") + 1
+             );
+             document.getElementById("url").setAttribute('href', url);
+         }
+         else {
+             document.getElementById("myspan").innerHTML = "{{ item }}";
+         }
+         </script>
+    {% endfor %}
+</body>
+</html>
