@@ -60,6 +60,29 @@ def process(device="cpu",
             output_types=['com'],
             server_uri="localhost"
             ):
+    """Main method for video bg removal process.
+
+    Args:
+      device - the device where the computation takes place (cpu/gpu),
+      model_type - computation model type,
+      model_backbone - feature extraction,
+      model_backbone_scale - none,
+      model_refine_mode - none,
+      model_refine_sample_pixels - none,
+      model_checkpoin - model file path,
+      video_src - video file path,
+      video_bgr - background image file path,
+      video_resize - none,
+      preprocess_alignment - none,
+      output_dir - folder where the result will be saved ,
+      output_types - the types of results to be calculated ,
+      server_uri - uri of the server for the link to download the result
+
+    Returns:
+      before calculation - the number of rendered frames
+      after - a link to the file for download 
+    """
+
     device = torch.device(device)
 
     # Load model
@@ -92,7 +115,7 @@ def process(device="cpu",
 
     # Create output directory
     if os.path.exists(output_dir):
-        if True: #input(f'Directory {output_dir} already exists. Override? [Y/N]: ').lower() == 'y':
+        if True: # #OLD CODE WAS# input(f'Directory {output_dir} already exists. Override? [Y/N]: ').lower() == 'y':
             shutil.rmtree(output_dir)
         else:
             exit()
@@ -130,6 +153,8 @@ def process(device="cpu",
                 com_writer.add_batch(com)
 
             i = i + 1
+            # return frame process count back to server
             yield str(i) + "/" + str(total)
 
+    # return result file url that can be download
     yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')

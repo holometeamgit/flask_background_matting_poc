@@ -26,19 +26,22 @@ def stream_template(template_name, **context):
     rv.disable_buffering()
     return rv
 
-
+### LOOK AT ME!!! ###
 @app.route('/uploader', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
+        # get project and create directory for it
         project_name = request.form['project']
         project_dir = os.path.join("content_projects", project_name)
         if not os.path.exists(project_dir):
             os.makedirs(project_dir)
 
+        # get video input video file
         f1 = request.files['video_file']
         complete_name1 = os.path.join(project_dir, "input.mp4")
         f1.save(complete_name1)
 
+        # get background input image file
         f2 = request.files['bg_file']
         complete_name2 = os.path.join(project_dir, "input.jpg")
         f2.save(complete_name2)
@@ -46,18 +49,14 @@ def upload_file():
         output_dir_var = os.path.join(os.path.join("static", "content_projects_output"), project_name)
         server_uri_var = request.base_url[:-8]
 
+        # run bg matting process
         result = process(video_src=complete_name1,
                          video_bgr=complete_name2,
                          output_dir=output_dir_var,
                          server_uri=server_uri_var)
 
+         # return stream with data from process method (frames count and url for file with result then)
         return flask.Response(stream_with_context(stream_template('template.html', rows=result)))
-
-        # return flask.Response(process(video_src=complete_name1,
-        #                               video_bgr=complete_name2,
-        #                               output_dir=output_dir_var,
-        #                               server_uri=server_uri_var))
-
 
 @app.route('/template_test')
 def template_test():
