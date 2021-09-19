@@ -16,6 +16,8 @@ from dataset import augmentation as A
 from inference_utils import HomographicAlignment
 from model import MattingBase, MattingRefine
 
+from extract_audio_to_video import ext_a_to_v
+
 class VideoWriter:
     def __init__(self, path, frame_rate, width, height):
         self.out = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), frame_rate, (width, height))
@@ -27,6 +29,9 @@ class VideoWriter:
             frame = frames[i]
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             self.out.write(frame)
+
+    def __del__(self):
+        self.out.release()
 
 def matching_vid_bgr_size(vid, bgr):
     video_cap = cv2.VideoCapture(vid)
@@ -156,5 +161,12 @@ def process(device="cpu",
             # return frame process count back to server
             yield str(i) + "/" + str(total)
 
+    del com_writer
+    
+    yield "sync audio and video, please wait ... "
+    # yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
+
+    video_res_path = ext_a_to_v(video_src, os.path.join(output_dir, 'com.mp4'), output_dir)
+
     # return result file url that can be download
-    yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
+    yield "file url:  " + server_uri + video_res_path
