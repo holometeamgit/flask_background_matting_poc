@@ -26,6 +26,9 @@ var/
 .installed.cfg
 *.egg
 
+#logs
+log.txt
+
 #custom
 content/
 content_projects/

@@ -33,6 +33,24 @@ class VideoWriter:
     def __del__(self):
         self.out.release()
 
+def size_mult_of_four(vid_w, vid_h):
+    if vid_w % 4 == 1:
+        vid_w = vid_w - 1
+    elif vid_w % 4 == 2:
+        vid_w = vid_w - 2
+    elif vid_w % 4 == 3:
+        vid_w = vid_w + 1
+
+    if vid_h % 4 == 1:
+        vid_h = vid_h - 1
+    elif vid_h % 4 == 2:
+        vid_h = vid_h - 2
+    elif vid_h % 4 == 3:
+        vid_h = vid_h + 1
+
+    return vid_w, vid_h
+
+
 def matching_vid_bgr_size(vid, bgr):
     video_cap = cv2.VideoCapture(vid)
     vid_w = 0
@@ -45,6 +63,7 @@ def matching_vid_bgr_size(vid, bgr):
     video_cap.release()
 
     bgr_w, bgr_h = bgr.size
+    vid_w, vid_h = size_mult_of_four(vid_w, vid_h)
 
     result = bgr.resize((int(vid_w), int(vid_h)), Image.ANTIALIAS)
     print("Image width {} height {}".format(bgr_w, bgr_h))
@@ -111,6 +130,8 @@ def process(device="cpu",
 
     bgr_resized = [matching_vid_bgr_size(video_src, bgr[0])]
     bgr = bgr_resized
+
+    video_resize = bgr[0].size
 
     dataset = ZipDataset([vid, bgr], transforms=A.PairCompose([
         A.PairApply(T.Resize(video_resize[::-1]) if video_resize else nn.Identity()),

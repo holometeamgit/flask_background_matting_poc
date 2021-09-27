@@ -42,7 +42,7 @@ def ext_a_to_v(video_src_path, video_dst_path, output_dir):
 
     video_res_path = os.path.join(output_dir, uuid.uuid4().hex + "_" + tail)
 
-    out = ffmpeg.output(stream_out, audio_in, video_res_path)
+    out = ffmpeg.output(stream_out, audio_in, video_res_path, **{'q:v': 0})
     out.run()
 
     return video_res_path
