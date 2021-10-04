@@ -107,7 +107,10 @@ def process(device="cpu",
       after - a link to the file for download 
     """
 
-    device = torch.device(device)
+    #device = torch.device(device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    yield "GPU support: " + torch.cuda.is_available()
+    #yield device
 
     # Load model
     if model_type == 'mattingbase':
@@ -185,9 +188,10 @@ def process(device="cpu",
     del com_writer
     
     yield "sync audio and video, please wait ... "
-    # yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
+    #yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
 
     video_res_path = ext_a_to_v(video_src, os.path.join(output_dir, 'com.mp4'), output_dir)
 
     # return result file url that can be download
     yield "file url:  " + server_uri + video_res_path
+    #yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
