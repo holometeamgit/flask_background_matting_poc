@@ -1,4 +1,4 @@
-# Importan
+# Important
 
 If you haven't cuda devices on machine, install tf version without +cu postfix (look at the requiement file)
 
