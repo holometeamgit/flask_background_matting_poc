@@ -1,0 +1,14 @@
+version: '3.0'
+
+services:
+  bg-removal-gateway:
+    image: holome_bg_removal
+    build:
+      context: .
+    environment:
+      - DEBUG=1
+    ports:
+      - 9090:5000
+    volumes:
+      - .:/app
+    container_name: holome_bg_removal_gateway
