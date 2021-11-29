@@ -49,6 +49,7 @@ def upload_file():
         output_dir_var = os.path.join(os.path.join("static", "content_projects_output"), project_name)
         server_uri_var = request.base_url[:-8]
 
+        ### MAIN PROCESS HERE """
         # run bg matting process
         result = process(video_src=complete_name1,
                          video_bgr=complete_name2,

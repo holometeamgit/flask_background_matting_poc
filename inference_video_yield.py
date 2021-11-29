@@ -33,6 +33,7 @@ class VideoWriter:
     def __del__(self):
         self.out.release()
 
+### makes sizes multiple of 4
 def size_mult_of_four(vid_w, vid_h):
     if vid_w % 4 == 1:
         vid_w = vid_w - 1
@@ -69,8 +70,7 @@ def matching_vid_bgr_size(vid, bgr):
     print("Image width {} height {}".format(bgr_w, bgr_h))
     return result
 
-def process(device="cpu",
-            model_type='mattingrefine',
+def process(model_type='mattingrefine',
             model_backbone="resnet50",
             model_backbone_scale=0.25,
             model_refine_mode="full",
@@ -78,7 +78,6 @@ def process(device="cpu",
             model_checkpoint="content/pytorch_resnet50.pth",
             video_src="content/out_1.mp4",
             video_bgr="content/bg_1.jpg",
-            video_resize=None,
             preprocess_alignment=None,
             output_dir="content/output_1",
             output_types=['com'],
@@ -107,12 +106,15 @@ def process(device="cpu",
       after - a link to the file for download 
     """
 
-    #device = torch.device(device)
+    #device = torch.device(device) - old variant
+    # yield device
+
+    ### Select GPU if it's possible or CPU if not ###
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     yield "GPU support: " + torch.cuda.is_available()
-    #yield device
 
-    # Load model
+
+    ### Load ML model ###
     if model_type == 'mattingbase':
         model = MattingBase(model_backbone)
     if model_type == 'mattingrefine':
@@ -127,15 +129,18 @@ def process(device="cpu",
     model = model.to(device).eval()
     model.load_state_dict(torch.load(model_checkpoint, map_location=device), strict=False)
 
-    # Load video and background
+    ### Load video and background ###
     vid = VideoDataset(video_src)
     bgr = [Image.open(video_bgr).convert('RGB')]
 
+
+    ### Match video and bg image sizes and resize bg image if it's required ###
     bgr_resized = [matching_vid_bgr_size(video_src, bgr[0])]
     bgr = bgr_resized
 
     video_resize = bgr[0].size
 
+    ### Loading frames from video to dataset ###
     dataset = ZipDataset([vid, bgr], transforms=A.PairCompose([
         A.PairApply(T.Resize(video_resize[::-1]) if video_resize else nn.Identity()),
         HomographicAlignment() if preprocess_alignment else A.PairApply(nn.Identity()),
@@ -150,7 +155,7 @@ def process(device="cpu",
             exit()
     os.makedirs(output_dir)
 
-    # Prepare writers
+    # Prepare video writers
     h = video_resize[1] if video_resize is not None else vid.height
     w = video_resize[0] if video_resize is not None else vid.width
     if 'com' in output_types:
@@ -158,17 +163,18 @@ def process(device="cpu",
 
     #yield url_for('static', filename=os.path.join(output_dir, 'com.mp4'))
 
-    # Conversion loop
+    ### Main processing loop ###
     with torch.no_grad():
         dataloader = DataLoader(dataset, batch_size=1, pin_memory=True)
         total = len(dataloader)
         i = 0
         for input_batch in tqdm(dataloader):
             src, bgr = input_batch
-            tgt_bgr = torch.tensor([120 / 255, 255 / 255, 155 / 255], device=device).view(1, 3, 1, 1)
+            tgt_bgr = torch.tensor([120 / 255, 255 / 255, 155 / 255], device=device).view(1, 3, 1, 1)  # green color
             src = src.to(device, non_blocking=True)
             bgr = bgr.to(device, non_blocking=True)
 
+            # different output frames variations
             if model_type == 'mattingbase':
                 pha, fgr, err, _ = model(src, bgr)
             elif model_type == 'mattingrefine':
@@ -179,16 +185,20 @@ def process(device="cpu",
             if 'com' in output_types:
                 # Output composite with green background
                 com = fgr * pha + tgt_bgr * (1 - pha)
-                com_writer.add_batch(com)
+                com_writer.add_batch(com) #save frame to video file
 
             i = i + 1
             # return frame process count back to server
             yield str(i) + "/" + str(total)
 
-    del com_writer
-    
+    del com_writer # close video file
+    ### finish whole ML processing
+
+    ### add audio track to processed video and save it to new file
     yield "sync audio and video, please wait ... "
-    #yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4')
+
+    # OLD CODE WAS #
+    #yield "file url:  " + server_uri + os.path.join(output_dir, 'com.mp4') - old code without audio
 
     video_res_path = ext_a_to_v(video_src, os.path.join(output_dir, 'com.mp4'), output_dir)
 
